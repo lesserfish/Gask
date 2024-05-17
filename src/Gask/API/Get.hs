@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Gask.API.Get where
+module Gask.API.Get (GetRequest (..), getModelInfo) where
 
 import Gask.API.Requests
 import Gask.Types

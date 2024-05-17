@@ -1,9 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Gask.API.List where
+module Gask.API.List (ListRequest (..), getModelList) where
 
-import Data.Aeson (FromJSON, ToJSON, object, parseJSON, toJSON, withObject, (.:), (.:?), (.=))
-import Data.Maybe (catMaybes)
 import Gask.API.Requests
 import Gask.Types
 import Network.HTTP.Simple (getResponseBody, getResponseStatusCode)
@@ -27,26 +25,6 @@ data ListRequest = ListRequest
     , lPageToken :: Maybe String
     }
     deriving (Show)
-
-data ModelList = ModelList
-    { mlModels :: [ModelInfo]
-    , mlNextPageToken :: Maybe String
-    }
-    deriving (Show)
-
-instance ToJSON ModelList where
-    toJSON ml =
-        object $
-            catMaybes
-                [ ("models" .=) <$> (Just $ mlModels ml)
-                , ("nextPageToken" .=) <$> (mlNextPageToken ml)
-                ]
-
-instance FromJSON ModelList where
-    parseJSON = withObject "ModelList" $ \v ->
-        ModelList
-            <$> v .: "models"
-            <*> v .:? "nextPageToken"
 
 path :: String
 path = "/v1/models"

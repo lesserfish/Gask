@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Gask.Types.ModelInfo (ModelInfo (..)) where
+module Gask.Types.ModelInfo where
 
 import Data.Aeson
 import Data.Maybe (catMaybes)
