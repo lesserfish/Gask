@@ -2,7 +2,7 @@
 
 module Gask.Types.Error (Error (..), tryParse) where
 
-import Data.Aeson (FromJSON, ToJSON, decodeStrict, object, parseJSON, toJSON, withObject, (.:), (.:?), (.=))
+import Data.Aeson (FromJSON, ToJSON, eitherDecodeStrict, object, parseJSON, toJSON, withObject, (.:), (.:?), (.=))
 import qualified Data.ByteString as BS
 import Data.Maybe (catMaybes)
 
@@ -34,17 +34,12 @@ instance FromJSON Error where
         status <- errorobj .:? "status"
         return (Error code msg status)
 
-helper :: (FromJSON a, FromJSON b) => BS.ByteString -> b -> Either a b
-helper json generic_other = case (decodeStrict json) of
-    Nothing -> Right other
-    Just obj -> Left obj
-  where
-    maybeother = decodeStrict json
-    other = case maybeother of
-        Nothing -> generic_other
-        Just o -> o
+tryError :: BS.ByteString -> String -> Error
+tryError json error_message = case (eitherDecodeStrict json) of
+    Left _ -> Error (-1) (Just error_message) (Just "")
+    Right e -> e
 
 tryParse :: (FromJSON a) => BS.ByteString -> Either a Error
-tryParse json = helper json err
-  where
-    err = Error (-123) (Just . show $ json) (Just "") :: Error
+tryParse json = case (eitherDecodeStrict json) of
+    Left str -> Right $ tryError json str
+    Right obj -> Left obj

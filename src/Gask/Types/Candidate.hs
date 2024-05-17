@@ -2,14 +2,14 @@
 
 module Gask.Types.Candidate where
 
-import Data.Aeson (FromJSON, ToJSON, object, parseJSON, toJSON, withObject, (.:), (.:?), (.=))
+import Data.Aeson (FromJSON, ToJSON, object, parseJSON, toJSON, withObject, (.:?), (.=))
 import Data.Maybe (catMaybes)
 import Gask.Types.CitationMetadata
 import Gask.Types.Content
 import Gask.Types.SafetyRating
 
 data Candidate = Candidate
-    { cContent :: Content
+    { cContent :: Maybe Content
     , cFinishReason :: Maybe FinishReason
     , cSafetyRatings :: Maybe [SafetyRating]
     , cCitationMetadata :: Maybe CitationMetadata
@@ -22,7 +22,7 @@ instance ToJSON Candidate where
     toJSON candidate =
         object $
             catMaybes
-                [ ("content" .=) <$> (Just . cContent $ candidate)
+                [ ("content" .=) <$> (cContent $ candidate)
                 , ("finishReason" .=) <$> (cFinishReason candidate)
                 , ("safetyRatings" .=) <$> (cSafetyRatings candidate)
                 , ("citationMetadata" .=) <$> (cCitationMetadata candidate)
@@ -33,7 +33,7 @@ instance ToJSON Candidate where
 instance FromJSON Candidate where
     parseJSON = withObject "Candidate" $ \v ->
         Candidate
-            <$> v .: "content"
+            <$> v .:? "content"
             <*> v .:? "finishReason"
             <*> v .:? "SafetySetting"
             <*> v .:? "citationMetadata"
