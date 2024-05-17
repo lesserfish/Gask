@@ -47,17 +47,17 @@ type StreamGenerateContentRequest = GenerateContentRequest
 path :: String -> String
 path model_name = "/v1/" ++ model_name ++ ":streamGenerateContent"
 
-toConduit :: (GenerateContentResponse -> IO ()) -> (ConduitT GenerateContentResponse Void IO ())
+toConduit :: ((Result GenerateContentResponse) -> IO ()) -> (ConduitT (Result GenerateContentResponse) Void IO ())
 toConduit f = mapM_C f
 
-streamGenerateContent :: StreamGenerateContentRequest -> (GenerateContentResponse -> IO ()) -> IO ()
+streamGenerateContent :: StreamGenerateContentRequest -> ((Result GenerateContentResponse) -> IO ()) -> IO ()
 streamGenerateContent (GenerateContentRequest key model contents ss gc) handler = do
     let qp = QueryParameters key
     let br = BodyRequest contents ss gc
     postStream (path model) (query qp) br (toConduit handler)
     return ()
 
-streamGenerateContentC :: StreamGenerateContentRequest -> (ConduitT GenerateContentResponse Void IO a) -> IO a
+streamGenerateContentC :: StreamGenerateContentRequest -> (ConduitT (Result GenerateContentResponse) Void IO a) -> IO a
 streamGenerateContentC (GenerateContentRequest key model contents ss gc) sink = do
     let qp = QueryParameters key
     let br = BodyRequest contents ss gc

@@ -52,7 +52,7 @@ data GenerateContentRequest = GenerateContentRequest
 path :: String -> String
 path model_name = "/v1/" ++ model_name ++ ":generateContent"
 
-generateContent :: GenerateContentRequest -> IO (Either GenerateContentResponse Error)
+generateContent :: GenerateContentRequest -> IO (Result GenerateContentResponse)
 generateContent (GenerateContentRequest key model contents ss gc) = do
     let qp = QueryParameters key
     let br = BodyRequest contents ss gc
@@ -60,5 +60,5 @@ generateContent (GenerateContentRequest key model contents ss gc) = do
     let statuscode = getResponseStatusCode response
     let json = getResponseBody response
     if statuscode /= 200
-        then return $ Right (Error statuscode (Just "") (Just ""))
+        then return $ Fail $ (Error statuscode (Just "") (Just ""))
         else return $ tryParse json

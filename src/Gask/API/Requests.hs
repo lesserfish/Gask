@@ -67,4 +67,4 @@ postStream path qp body sink = do
                 |> (HTTP.setRequestBodyJSON $ body)
                 |> (HTTP.addToRequestQueryString qp)
     let conduit = combinator .| sink :: ConduitT BS.ByteString Void IO c
-    HTTP.httpSink request (\r -> conduit)
+    HTTP.httpSink request (\_ -> conduit)

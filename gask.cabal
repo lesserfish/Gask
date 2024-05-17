@@ -31,6 +31,7 @@ library
                       Gask.Types.ModelInfo,
                       Gask.Types.ModelList,
                       Gask.Types.PromptFeedback,
+                      Gask.Types.Result,
                       Gask.Types.SafetyRating,
                       Gask.Types.SafetySetting,
                       Gask.Types.UsageMetadata,

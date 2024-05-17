@@ -29,12 +29,12 @@ data ListRequest = ListRequest
 path :: String
 path = "/v1/models"
 
-getModelList :: ListRequest -> IO (Either ModelList Error)
+getModelList :: ListRequest -> IO (Result ModelList)
 getModelList (ListRequest a b c) = do
     let qp = QueryParameters a b c
     response <- get path (query qp)
     let statuscode = getResponseStatusCode response
     let json = getResponseBody response
     if statuscode /= 200
-        then return $ Right (Error statuscode (Just "") (Just ""))
+        then return $ Fail (Error statuscode (Just "") (Just ""))
         else return $ tryParse json

@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Gask.Types.Error (Error (..), tryParse) where
+module Gask.Types.Error (Error (..)) where
 
 import Data.Aeson (FromJSON, ToJSON, eitherDecodeStrict, object, parseJSON, toJSON, withObject, (.:), (.:?), (.=))
 import qualified Data.ByteString as BS
@@ -33,13 +33,3 @@ instance FromJSON Error where
         msg <- errorobj .:? "message"
         status <- errorobj .:? "status"
         return (Error code msg status)
-
-tryError :: BS.ByteString -> String -> Error
-tryError json error_message = case (eitherDecodeStrict json) of
-    Left _ -> Error (-1) (Just error_message) (Just "")
-    Right e -> e
-
-tryParse :: (FromJSON a) => BS.ByteString -> Either a Error
-tryParse json = case (eitherDecodeStrict json) of
-    Left str -> Right $ tryError json str
-    Right obj -> Left obj

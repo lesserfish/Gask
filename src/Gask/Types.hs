@@ -8,6 +8,7 @@ module Gask.Types (
     module Gask.Types.ModelInfo,
     module Gask.Types.ModelList,
     module Gask.Types.PromptFeedback,
+    module Gask.Types.Result,
     module Gask.Types.SafetyRating,
     module Gask.Types.SafetySetting,
     module Gask.Types.UsageMetadata,
@@ -22,6 +23,7 @@ import Gask.Types.GenerationConfig
 import Gask.Types.ModelInfo
 import Gask.Types.ModelList
 import Gask.Types.PromptFeedback
+import Gask.Types.Result
 import Gask.Types.SafetyRating
 import Gask.Types.SafetySetting
 import Gask.Types.UsageMetadata
