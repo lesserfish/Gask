@@ -5,16 +5,11 @@ module Gask where
 import Conduit
 import Control.Concurrent (threadDelay)
 import Control.Monad
-import Control.Monad.Catch
-import Control.Monad.IO.Class
 import Data.ByteString
 import Data.JsonStream.Conduit
-import Data.JsonStream.Parser (ParseOutput (..), Parser, arrayOf, integer, runParser, value)
-import Data.Typeable
-import Data.Void
+import Data.JsonStream.Parser (Parser, arrayOf, integer)
 import Gask.API.GenerateContent
 import Gask.Types
-import Network.HTTP.Simple
 
 defaultPart :: String -> Part
 defaultPart str = TextPart (Text str)

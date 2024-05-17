@@ -1,8 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Gask.API.StreamGenerateContent (StreamGenerateContentRequest, streamGenerateContent) where
+module Gask.API.StreamGenerateContent (StreamGenerateContentRequest, streamGenerateContent, streamGenerateContentC) where
 
-import Conduit (ConduitT)
+import Conduit (ConduitT, mapM_C)
 import Data.Aeson (FromJSON, ToJSON, object, parseJSON, toJSON, withObject, (.:?), (.=))
 import Data.Maybe (catMaybes)
 import Data.Void
@@ -47,9 +47,18 @@ type StreamGenerateContentRequest = GenerateContentRequest
 path :: String -> String
 path model_name = "/v1/" ++ model_name ++ ":streamGenerateContent"
 
-streamGenerateContent :: StreamGenerateContentRequest -> (ConduitT GenerateContentResponse Void IO ()) -> IO ()
+toConduit :: (GenerateContentResponse -> IO ()) -> (ConduitT GenerateContentResponse Void IO ())
+toConduit f = mapM_C f
+
+streamGenerateContent :: StreamGenerateContentRequest -> (GenerateContentResponse -> IO ()) -> IO ()
 streamGenerateContent (GenerateContentRequest key model contents ss gc) handler = do
     let qp = QueryParameters key
     let br = BodyRequest contents ss gc
-    postStream (path model) (query qp) br handler
+    postStream (path model) (query qp) br (toConduit handler)
     return ()
+
+streamGenerateContentC :: StreamGenerateContentRequest -> (ConduitT GenerateContentResponse Void IO a) -> IO a
+streamGenerateContentC (GenerateContentRequest key model contents ss gc) sink = do
+    let qp = QueryParameters key
+    let br = BodyRequest contents ss gc
+    postStream (path model) (query qp) br sink

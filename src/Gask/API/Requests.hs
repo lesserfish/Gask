@@ -52,7 +52,7 @@ post path qp body = do
                 |> (HTTP.addToRequestQueryString qp)
     HTTP.httpBS request
 
-postStream :: forall a b. (Aeson.ToJSON a, Aeson.FromJSON b) => String -> HTTP.Query -> a -> (ConduitT b Void IO ()) -> IO ()
+postStream :: forall a b c. (Aeson.ToJSON a, Aeson.FromJSON b) => String -> HTTP.Query -> a -> (ConduitT b Void IO c) -> IO c
 postStream path qp body sink = do
     let parser = arrayOf (value :: Parser b)
     let combinator = void $ parserConduit parser :: ConduitT BS.ByteString b IO ()
@@ -66,6 +66,5 @@ postStream path qp body sink = do
                 |> (HTTP.setRequestPath . BC.pack $ path)
                 |> (HTTP.setRequestBodyJSON $ body)
                 |> (HTTP.addToRequestQueryString qp)
-    let conduit = combinator .| sink :: ConduitT BS.ByteString Void IO ()
+    let conduit = combinator .| sink :: ConduitT BS.ByteString Void IO c
     HTTP.httpSink request (\r -> conduit)
-    return ()
