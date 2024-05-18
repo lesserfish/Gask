@@ -5,6 +5,7 @@ module Gask.Types.GenerateContentResponse where
 import Data.Aeson (FromJSON, ToJSON, object, parseJSON, toJSON, withObject, (.:), (.:?), (.=))
 import Data.Maybe (catMaybes)
 import Gask.Types.Candidate
+import Gask.Types.Content
 import Gask.Types.PromptFeedback
 import Gask.Types.UsageMetadata
 
@@ -30,3 +31,13 @@ instance FromJSON GenerateContentResponse where
             <$> v .: "candidates"
             <*> v .:? "promptFeedback"
             <*> v .:? "usageMetadata"
+
+responseHasText :: GenerateContentResponse -> Bool
+responseHasText (GenerateContentResponse [] _ _) = False
+responseHasText (GenerateContentResponse candidates _ _) = (foldl (||) False) . (fmap candidateHasText) $ candidates
+
+responseText :: GenerateContentResponse -> String
+responseText (GenerateContentResponse candidates _ _) = concat . (fmap candidateText) $ candidates
+
+responseContents :: GenerateContentResponse -> [Content]
+responseContents = catMaybes . fmap cContent . gcrCandidates

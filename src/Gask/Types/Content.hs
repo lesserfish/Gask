@@ -86,3 +86,20 @@ instance FromJSON Content where
         Content
             <$> v .: "parts"
             <*> v .: "role"
+
+partHasText :: Part -> Bool
+partHasText (TextPart _) = True
+partHasText _ = False
+
+partText :: Part -> String
+partText (ImagePart _) = ""
+partText (TextPart (Text txt)) = txt
+
+contentHasText :: Content -> Bool
+contentHasText (Content parts _) = (foldl (||) False) . (fmap partHasText) $ parts
+
+contentText :: Content -> String
+contentText (Content parts _) = concat . (fmap partText) $ parts
+
+newUserText :: String -> Content
+newUserText txt = Content [TextPart (Text txt)] "user"

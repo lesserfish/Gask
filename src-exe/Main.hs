@@ -3,88 +3,81 @@
 
 module Main where
 
-import Configuration
 import Control.Monad.IO.Class
-import Data.List (intersperse)
-import Data.Maybe (catMaybes)
+import Gask
 import qualified Gask.API as G
+import Settings
 import System.Console.ANSI
-import System.Console.Haskeline
+import qualified System.Console.Haskeline as HL
 import System.Exit (ExitCode (..), exitWith)
-import System.IO
 
-defaultInput :: IO String
-defaultInput =
-    runInputT
-        defaultSettings
+setColor :: Color -> IO ()
+setColor color = do
+    setSGR [SetColor Foreground Vivid color]
+
+resetColor :: IO ()
+resetColor = do
+    setSGR [Reset]
+
+defaultFetch :: Settings -> IO String
+defaultFetch settings =
+    HL.runInputT
+        HL.defaultSettings
         ( do
-            liftIO $ setSGR [SetColor Foreground Vivid Green]
-            input <- getInputLine ""
-            case input of
-                Nothing -> liftIO $ exitWith (ExitFailure (-1))
-                Just str -> do
-                    liftIO $ setSGR [Reset]
-                    return str
+            let quietMode = sQuietMode settings
+            if quietMode
+                then do
+                    input <- HL.getInputLine ""
+                    case input of
+                        Nothing -> liftIO $ exitWith (ExitFailure (-1))
+                        Just str -> do
+                            return str
+                else do
+                    liftIO $ setColor . sPromptColor $ settings
+                    liftIO $ putStr "\n\n : "
+                    liftIO $ setColor . sUserColor $ settings
+                    input <- HL.getInputLine ""
+                    liftIO $ resetColor
+                    case input of
+                        Nothing -> liftIO $ exitWith (ExitFailure (-1))
+                        Just str -> do
+                            liftIO $ setColor . sPromptColor $ settings
+                            liftIO $ putStr $ "\n\n > "
+                            liftIO $ resetColor
+                            return str
         )
 
-extendedInput :: IO String
-extendedInput =
-    runInputT defaultSettings (loop "")
+eofFetch :: Settings -> IO String
+eofFetch settings = do
+    let quietMode = sQuietMode settings
+    if quietMode
+        then do
+            HL.runInputT HL.defaultSettings (loop "")
+        else do
+            liftIO $ setColor . sPromptColor $ settings
+            liftIO $ putStr "\n\n : "
+            liftIO $ setColor . sUserColor $ settings
+            str <- HL.runInputT HL.defaultSettings (loop "")
+            liftIO $ setColor . sPromptColor $ settings
+            liftIO $ putStr $ "\n\n > "
+            liftIO $ resetColor
+            return str
   where
     loop buffer = do
-        liftIO $ setSGR [SetColor Foreground Vivid Green]
-        input <- getInputLine ""
+        input <- HL.getInputLine ""
         case input of
             Nothing -> return buffer
             Just str -> do
                 liftIO $ setSGR [Reset]
                 loop (buffer ++ "\n" ++ str)
 
-printColored :: Color -> String -> IO ()
-printColored color text = do
-    setSGR [SetColor Foreground Vivid color]
-    putStr text
-    setSGR [Reset]
-
-printColoredLn :: Color -> String -> IO ()
-printColoredLn color text = do
-    setSGR [SetColor Foreground Vivid color]
-    putStrLn text
-    setSGR [Reset]
-
-chooseInput :: Bool -> IO String
-chooseInput False = defaultInput
-chooseInput True = extendedInput
-
-outputEmptyResponse :: G.GenerateContentResponse -> String
-outputEmptyResponse _ = "[Empty response]"
-
-outputEmptyCandidate :: G.Candidate -> String
-outputEmptyCandidate _ = "[Empty Response]"
-
-outputPart :: G.Part -> String
-outputPart (G.TextPart (G.Text text)) = text
-outputPart (G.ImagePart _) = "[Image not supported]"
-
-outputContent :: G.Content -> String
-outputContent content = concat . (intersperse "\n") . (fmap outputPart) . G.cParts $ content
-
-outputCandidate :: G.Candidate -> String
-outputCandidate candidate = case (G.cContent candidate) of
-    Nothing -> outputEmptyCandidate candidate
-    Just content -> outputContent content
-
-outputResponse :: G.GenerateContentResponse -> String
-outputResponse response
-    | (length . G.gcrCandidates $ response) == 0 = outputEmptyResponse response
-    | otherwise = concat . (intersperse "\n") . (fmap outputCandidate) . G.gcrCandidates $ response
-
-renderResponse :: (G.Result G.GenerateContentResponse) -> IO [G.Result G.GenerateContentResponse]
-renderResponse (G.Fail e) = do
+renderError :: G.Error -> IO ()
+renderError e = do
     let code = G.errorCode e
     let message = G.errorMessage e
     let status = G.errorStatus e
-    printColoredLn Red $
+    setColor Red
+    putStrLn $
         "\n\nError: "
             ++ (show code)
             ++ "\nMessage: "
@@ -92,67 +85,67 @@ renderResponse (G.Fail e) = do
             ++ "\nStatus : "
             ++ (show status)
             ++ "\n"
-    return [G.Fail e]
-renderResponse (G.OK response) = do
-    let output = outputResponse response
-    putStr $ output
-    return [G.OK response]
+    resetColor
 
-ask :: Args -> Configuration -> IO ()
-ask args config = do
-    printColored Yellow "\n : "
-    hFlush stdout
+defaultRender :: Settings -> (G.Result G.GenerateContentResponse) -> IO [G.GenerateContentResponse]
+defaultRender settings (G.Fail e) = do
+    let quietMode = sQuietMode settings
+    if quietMode
+        then return []
+        else do
+            renderError e
+            return []
+defaultRender settings (G.OK response) = do
+    let quietMode = sQuietMode settings
+    if G.responseHasText response
+        then do
+            if quietMode
+                then do
+                    putStr $ G.responseText response
+                    return [response]
+                else do
+                    setColor . sModelColor $ settings
+                    putStr $ G.responseText response
+                    resetColor
+                    return [response]
+        else do
+            if quietMode
+                then return []
+                else do
+                    putStr $ "[No response]"
+                    return []
 
-    message <- chooseInput (waitForEOF args) :: IO String
-    let part = G.TextPart . G.Text $ message
-    let content = [G.Content [part] "user"]
-    let request = G.GenerateContentRequest (key config) (model config) (Just content) (safetySettings config) (generationConfig config)
+getFetchFunction :: Settings -> (Gask -> IO String)
+getFetchFunction settings
+    | sInteractive settings = \_ -> eofFetch settings
+    | otherwise = \_ -> defaultFetch settings
 
-    printColored Yellow "\n > "
-    liftIO $ setSGR [SetColor Foreground Vivid Blue]
-    _ <- G.streamGenerateContentMC request renderResponse
-    setSGR [Reset]
-    putStrLn "\n"
-
-    return ()
-
-getResponseContents :: G.GenerateContentResponse -> [G.Content]
-getResponseContents = catMaybes . fmap G.cContent . G.gcrCandidates
-
-getBotContents :: G.Result G.GenerateContentResponse -> Maybe [G.Content]
-getBotContents (G.Fail _) = Nothing
-getBotContents (G.OK r) = Just . getResponseContents $ r
-
-chat' :: [G.Content] -> Args -> Configuration -> IO ()
-chat' buffer args config = do
-    printColored Yellow "\n : "
-    hFlush stdout
-
-    message <- chooseInput (waitForEOF args) :: IO String
-    let part = G.TextPart . G.Text $ message
-    let new_content = [G.Content [part] "user"]
-    let content = buffer ++ new_content
-    let request = G.GenerateContentRequest (key config) (model config) (Just content) (safetySettings config) (generationConfig config)
-
-    printColored Yellow "\n > "
-    liftIO $ setSGR [SetColor Foreground Vivid Blue]
-    responses <- G.streamGenerateContentMC request renderResponse
-    setSGR [Reset]
-    putStrLn "\n"
-
-    let botContent = concat . catMaybes . (fmap getBotContents) $ responses :: [G.Content]
-    chat' (content ++ botContent) args config
-
-chat :: Args -> Configuration -> IO ()
-chat = chat' []
+getRender :: Settings -> (G.Result G.GenerateContentResponse) -> IO [G.GenerateContentResponse]
+getRender settings = defaultRender settings
 
 main :: IO ()
 main = do
-    args <- parseArgs
-    maybeConfig <- loadConfiguration args
-    case maybeConfig of
+    maybeSettings <- loadSettings
+    case maybeSettings of
         Nothing -> exitWith (ExitFailure (-1))
-        Just config -> do
-            if (interactive args)
-                then chat args config
-                else ask args config
+        Just settings -> do
+            if (sInteractive settings)
+                then do
+                    _ <-
+                        chat
+                            False
+                            settings
+                            (getFetchFunction settings)
+                            (getRender settings)
+                    return ()
+                else do
+                    _ <-
+                        chat
+                            True
+                            settings
+                            (getFetchFunction settings)
+                            ( \i -> do
+                                _ <- (getRender settings) i
+                                return []
+                            )
+                    return ()

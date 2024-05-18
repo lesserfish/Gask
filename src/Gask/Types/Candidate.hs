@@ -39,3 +39,11 @@ instance FromJSON Candidate where
             <*> v .:? "citationMetadata"
             <*> v .:? "tokenCount"
             <*> v .:? "index"
+
+candidateHasText :: Candidate -> Bool
+candidateHasText (Candidate Nothing _ _ _ _ _) = False
+candidateHasText (Candidate (Just content) _ _ _ _ _) = contentHasText content
+
+candidateText :: Candidate -> String
+candidateText (Candidate Nothing _ _ _ _ _) = ""
+candidateText (Candidate (Just content) _ _ _ _ _) = contentText content
