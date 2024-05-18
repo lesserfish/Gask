@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Gask.Types.Result where
+module Gask.Types.Result (Result (..), tryParse) where
 
 import Control.Applicative ((<|>))
 import Data.Aeson (FromJSON, ToJSON, eitherDecodeStrict, parseJSON, toJSON)
@@ -23,6 +23,20 @@ instance (FromJSON a) => FromJSON (Result a) where
 instance (Show a) => Show (Result a) where
     show (OK c) = show c
     show (Fail e) = show e
+
+instance Functor Result where
+    fmap f (OK x) = OK . f $ x
+    fmap _ (Fail e) = Fail e
+
+instance Applicative Result where
+    pure x = OK x
+    (Fail e) <*> _ = Fail e
+    _ <*> (Fail e) = Fail e
+    (OK f) <*> (OK x) = OK (f x)
+
+instance Monad Result where
+    (Fail e) >>= _ = Fail e
+    (OK x) >>= f = f x
 
 tryError :: BS.ByteString -> String -> Error
 tryError json error_message = case (eitherDecodeStrict json) of

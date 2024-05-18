@@ -2,8 +2,7 @@
 
 module Gask.Types.Error (Error (..)) where
 
-import Data.Aeson (FromJSON, ToJSON, eitherDecodeStrict, object, parseJSON, toJSON, withObject, (.:), (.:?), (.=))
-import qualified Data.ByteString as BS
+import Data.Aeson (FromJSON, ToJSON, object, parseJSON, toJSON, withObject, (.:), (.:?), (.=))
 import Data.Maybe (catMaybes)
 
 data Error = Error

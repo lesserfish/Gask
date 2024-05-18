@@ -1,6 +1,7 @@
 module Gask.Types (
     module Gask.Types.Candidate,
     module Gask.Types.CitationMetadata,
+    module Gask.Types.ContentEmbedding,
     module Gask.Types.Content,
     module Gask.Types.Error,
     module Gask.Types.GenerateContentResponse,
@@ -11,12 +12,14 @@ module Gask.Types (
     module Gask.Types.Result,
     module Gask.Types.SafetyRating,
     module Gask.Types.SafetySetting,
+    module Gask.Types.TaskType,
     module Gask.Types.UsageMetadata,
 ) where
 
 import Gask.Types.Candidate
 import Gask.Types.CitationMetadata
 import Gask.Types.Content
+import Gask.Types.ContentEmbedding
 import Gask.Types.Error
 import Gask.Types.GenerateContentResponse
 import Gask.Types.GenerationConfig
@@ -26,4 +29,5 @@ import Gask.Types.PromptFeedback
 import Gask.Types.Result
 import Gask.Types.SafetyRating
 import Gask.Types.SafetySetting
+import Gask.Types.TaskType
 import Gask.Types.UsageMetadata

@@ -18,12 +18,12 @@ constraints: json-stream +conduit
 common warnings
     ghc-options: -Wall
 
-library
+library gasklib
     import:           warnings
-    exposed-modules:  Gask,
-                      Gask.Types,
+    exposed-modules:  Gask.Types,
                       Gask.Types.Candidate,
                       Gask.Types.CitationMetadata,
+                      Gask.Types.ContentEmbedding,
                       Gask.Types.Content,
                       Gask.Types.Error,
                       Gask.Types.GenerateContentResponse,
@@ -34,7 +34,11 @@ library
                       Gask.Types.Result,
                       Gask.Types.SafetyRating,
                       Gask.Types.SafetySetting,
+                      Gask.Types.TaskType,
                       Gask.Types.UsageMetadata,
+                      Gask.API,
+                      Gask.API.BatchEmbedContents,
+                      Gask.API.EmbedContent,
                       Gask.API.GenerateContent,
                       Gask.API.Get,
                       Gask.API.List,
@@ -44,26 +48,28 @@ library
     -- other-extensions:
     build-depends:    base ^>=4.18.0.0,
                       aeson >= 2.2.1.0,
-                      containers >= 0.6.8,
-                      vector >= 0.13.1.0,
-                      mtl >= 2.3.1,
                       http-conduit >= 2.3.8.3,
-                      http-types >= 0.12.3,
                       bytestring >= 0.11.4.0,
                       json-stream >= 0.4.4.0,
                       conduit >= 1.3.5,
-                      exceptions >= 0.10.7
     hs-source-dirs:   src
     default-language: Haskell2010
 
 executable gask
     import:           warnings
     main-is:          Main.hs
-    -- other-modules:
+    other-modules: Configuration
     -- other-extensions:
     build-depends:
         base ^>=4.18.0.0,
-        gask
+        aeson >= 2.2.1.0,
+        optparse-applicative >= 0.18.1.0,
+        bytestring >= 0.11.4.0,
+        directory >= 1.3.8.1,
+        filepath >= 1.4.100.1,
+        haskeline >= 0.8.2.1,
+        ansi-terminal >= 1.0,
+        gasklib
 
     hs-source-dirs:   src-exe
     default-language: Haskell2010
