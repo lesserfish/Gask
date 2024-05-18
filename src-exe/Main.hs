@@ -19,6 +19,12 @@ resetColor :: IO ()
 resetColor = do
     setSGR [Reset]
 
+printPrompt :: Color -> String -> IO ()
+printPrompt color content = do
+    liftIO $ setColor $ color
+    liftIO $ putStr $ content
+    liftIO $ resetColor
+
 defaultFetch :: Settings -> IO String
 defaultFetch settings =
     HL.runInputT
@@ -33,17 +39,14 @@ defaultFetch settings =
                         Just str -> do
                             return str
                 else do
-                    liftIO $ setColor . sPromptColor $ settings
-                    liftIO $ putStr "\n\n : "
+                    liftIO $ printPrompt (sPromptColor settings) "\n\n : "
                     liftIO $ setColor . sUserColor $ settings
                     input <- HL.getInputLine ""
                     liftIO $ resetColor
                     case input of
                         Nothing -> liftIO $ exitWith (ExitFailure (-1))
                         Just str -> do
-                            liftIO $ setColor . sPromptColor $ settings
-                            liftIO $ putStr $ "\n\n > "
-                            liftIO $ resetColor
+                            liftIO $ printPrompt (sPromptColor settings) "\n\n > "
                             return str
         )
 
@@ -54,13 +57,10 @@ eofFetch settings = do
         then do
             HL.runInputT HL.defaultSettings (loop "")
         else do
-            liftIO $ setColor . sPromptColor $ settings
-            liftIO $ putStr "\n\n : "
+            liftIO $ printPrompt (sPromptColor settings) "\n\n : "
             liftIO $ setColor . sUserColor $ settings
             str <- HL.runInputT HL.defaultSettings (loop "")
-            liftIO $ setColor . sPromptColor $ settings
-            liftIO $ putStr $ "\n\n > "
-            liftIO $ resetColor
+            liftIO $ printPrompt (sPromptColor settings) "\n\n > "
             return str
   where
     loop buffer = do
@@ -128,16 +128,28 @@ getRender settings
             return []
         )
 
+runChat :: Settings -> IO Gask
+runChat settings
+    | (sInput settings) == "" =
+        chat
+            (not . sInteractive $ settings)
+            settings
+            (getFetchFunction settings)
+            (getRender settings)
+    | otherwise = do
+        _ <- if (sQuietMode settings) then return $ () else printPrompt (sPromptColor settings) "\n\n > "
+        chatFromString
+            (sInput settings)
+            (not . sInteractive $ settings)
+            settings
+            (getFetchFunction settings)
+            (getRender settings)
+
 main :: IO ()
 main = do
     maybeSettings <- loadSettings
     case maybeSettings of
         Nothing -> exitWith (ExitFailure (-1))
         Just settings -> do
-            _ <-
-                chat
-                    (not . sInteractive $ settings)
-                    settings
-                    (getFetchFunction settings)
-                    (getRender settings)
+            _ <- runChat settings
             return ()

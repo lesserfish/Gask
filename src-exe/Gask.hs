@@ -47,3 +47,37 @@ chat stopOnEmpty settings fetch render = do
 
 chatForever :: Settings -> (Gask -> IO String) -> ((G.Result G.GenerateContentResponse) -> IO [G.GenerateContentResponse]) -> IO Gask
 chatForever = chat True
+
+resumeChat :: History -> Bool -> Settings -> (Gask -> IO String) -> ((G.Result G.GenerateContentResponse) -> IO [G.GenerateContentResponse]) -> IO Gask
+resumeChat history stopOnEmpty settings fetch render = do
+    let previousGask = Gask settings history
+    (_, gask) <- runStateT (chatT stopOnEmpty fetch render) previousGask
+    return gask
+
+chatFromStringT :: String -> Bool -> (Gask -> IO String) -> ((G.Result G.GenerateContentResponse) -> IO [G.GenerateContentResponse]) -> StateT Gask IO ()
+chatFromStringT message stopOnEmpty fetch render = do
+    gask <- get
+    let userContent = G.newUserText message
+    let fullContent = (gHistory gask) ++ [userContent]
+    let request =
+            G.GenerateContentRequest
+                (sKey . gSettings $ gask)
+                (sModel . gSettings $ gask)
+                (Just fullContent)
+                (sSafetySettings . gSettings $ gask)
+                (sGenerationConfig . gSettings $ gask)
+
+    responses <- lift $ G.streamGenerateContentMC request render
+    let responseCount = length responses
+    let modelContent = concat . (fmap G.responseContents) $ responses
+    put gask{gHistory = fullContent ++ modelContent}
+
+    if stopOnEmpty && responseCount == 0
+        then return ()
+        else chatT stopOnEmpty fetch render
+
+chatFromString :: String -> Bool -> Settings -> (Gask -> IO String) -> ((G.Result G.GenerateContentResponse) -> IO [G.GenerateContentResponse]) -> IO Gask
+chatFromString message stopOnEmpty settings fetch render = do
+    let previousGask = Gask settings []
+    (_, gask) <- runStateT (chatFromStringT message stopOnEmpty fetch render) previousGask
+    return gask

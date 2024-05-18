@@ -74,6 +74,7 @@ data Args = Args
     , aPromptColor :: String
     , aUserColor :: String
     , aModelColor :: String
+    , aInput :: [String]
     }
     deriving (Show)
 
@@ -136,6 +137,7 @@ argsParser =
                 <> value "blue"
                 <> help "Color for the model text"
             )
+        <*> many (argument str (metavar "INPUT"))
 
 parseArgs :: IO Args
 parseArgs = do
@@ -198,11 +200,12 @@ data Settings = Settings
     , sPromptColor :: Color
     , sUserColor :: Color
     , sModelColor :: Color
+    , sInput :: String
     }
     deriving (Show)
 
 mergeToSettings :: Args -> Configuration -> Settings
-mergeToSettings args config = (Settings key model safety generation interactive eof quietmode cp cu cm)
+mergeToSettings args config = (Settings key model safety generation interactive eof quietmode cp cu cm input)
   where
     key = case (aKey args) of
         Nothing -> (cKey config)
@@ -218,6 +221,7 @@ mergeToSettings args config = (Settings key model safety generation interactive 
     cp = stringToColor . aPromptColor $ args
     cu = stringToColor . aUserColor $ args
     cm = stringToColor . aModelColor $ args
+    input = concat . aInput $ args
 
 loadSettings :: IO (Maybe Settings)
 loadSettings = do
