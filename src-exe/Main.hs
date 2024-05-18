@@ -68,7 +68,6 @@ eofFetch settings = do
         case input of
             Nothing -> return buffer
             Just str -> do
-                liftIO $ setSGR [Reset]
                 loop (buffer ++ "\n" ++ str)
 
 renderError :: G.Error -> IO ()
@@ -117,11 +116,17 @@ defaultRender settings (G.OK response) = do
 
 getFetchFunction :: Settings -> (Gask -> IO String)
 getFetchFunction settings
-    | sInteractive settings = \_ -> eofFetch settings
+    | sWaitForEOF settings = \_ -> eofFetch settings
     | otherwise = \_ -> defaultFetch settings
 
 getRender :: Settings -> (G.Result G.GenerateContentResponse) -> IO [G.GenerateContentResponse]
-getRender settings = defaultRender settings
+getRender settings
+    | sInteractive settings = defaultRender settings
+    | otherwise =
+        ( \i -> do
+            _ <- (defaultRender settings) i
+            return []
+        )
 
 main :: IO ()
 main = do
@@ -144,8 +149,5 @@ main = do
                             True
                             settings
                             (getFetchFunction settings)
-                            ( \i -> do
-                                _ <- (getRender settings) i
-                                return []
-                            )
+                            (getRender settings)
                     return ()
