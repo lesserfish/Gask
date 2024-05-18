@@ -134,20 +134,10 @@ main = do
     case maybeSettings of
         Nothing -> exitWith (ExitFailure (-1))
         Just settings -> do
-            if (sInteractive settings)
-                then do
-                    _ <-
-                        chat
-                            False
-                            settings
-                            (getFetchFunction settings)
-                            (getRender settings)
-                    return ()
-                else do
-                    _ <-
-                        chat
-                            True
-                            settings
-                            (getFetchFunction settings)
-                            (getRender settings)
-                    return ()
+            _ <-
+                chat
+                    (not . sInteractive $ settings)
+                    settings
+                    (getFetchFunction settings)
+                    (getRender settings)
+            return ()
