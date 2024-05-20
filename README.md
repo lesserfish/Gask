@@ -33,6 +33,16 @@ Gask is a tool that lets you communicate with Gemini via the terminal. Usage is 
 
 We also include a library that allows you to use Gemini API from Haskell. Documentation is currently a work in progress.
 
+## Trinkets
+
+Some trinkets can be found in 'Auxiliary/'. For example, a VIM script that allows you to request Gemini to modify selected code:
+
+
+
+https://github.com/lesserfish/gask/assets/73536889/87f9bafa-7f12-4329-96a2-d48d6b1b475f
+
+
+
 ## Warning
 
 Be carefull simply piping the output of Gemini into your shell.
