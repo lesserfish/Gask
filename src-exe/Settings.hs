@@ -74,6 +74,7 @@ data Args = Args
     , aPromptColor :: String
     , aUserColor :: String
     , aModelColor :: String
+    , aPrompt :: String
     , aInput :: [String]
     }
     deriving (Show)
@@ -117,13 +118,13 @@ argsParser =
         <*> switch
             ( long "quiet"
                 <> short 'q'
-                <> help "Don't output prompts or format text"
+                <> help "Don't format text or output terminal prompts"
             )
         <*> strOption
             ( long "prompt-color"
                 <> metavar "COLOR"
                 <> value "yellow"
-                <> help "Color for the prompt"
+                <> help "Color for the terminal prompt"
             )
         <*> strOption
             ( long "user-color"
@@ -136,6 +137,13 @@ argsParser =
                 <> metavar "COLOR"
                 <> value "blue"
                 <> help "Color for the model text"
+            )
+        <*> strOption
+            ( long "prompt"
+                <> short 'p'
+                <> metavar "PROMPT_MESSAGE"
+                <> value ""
+                <> help "Starting prompt for the model"
             )
         <*> many (argument str (metavar "INPUT"))
 
@@ -200,12 +208,13 @@ data Settings = Settings
     , sPromptColor :: Color
     , sUserColor :: Color
     , sModelColor :: Color
+    , sPrompt :: String
     , sInput :: String
     }
     deriving (Show)
 
 mergeToSettings :: Args -> Configuration -> Settings
-mergeToSettings args config = (Settings key model safety generation interactive eof quietmode cp cu cm input)
+mergeToSettings args config = (Settings key model safety generation interactive eof quietmode cp cu cm prompt input)
   where
     key = case (aKey args) of
         Nothing -> (cKey config)
@@ -221,6 +230,7 @@ mergeToSettings args config = (Settings key model safety generation interactive 
     cp = stringToColor . aPromptColor $ args
     cu = stringToColor . aUserColor $ args
     cm = stringToColor . aModelColor $ args
+    prompt = aPrompt $ args
     input = concat . aInput $ args
 
 loadSettings :: IO (Maybe Settings)

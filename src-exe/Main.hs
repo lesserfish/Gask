@@ -131,19 +131,23 @@ getRender settings
 runChat :: Settings -> IO Gask
 runChat settings
     | (sInput settings) == "" =
-        chat
+        chatMethod
             (not . sInteractive $ settings)
             settings
             (getFetchFunction settings)
             (getRender settings)
     | otherwise = do
-        _ <- if (sQuietMode settings) then return $ () else printPrompt (sPromptColor settings) "\n\n > "
-        chatFromString
+        _ <- if (sQuietMode settings) then return $ () else printPrompt (sPromptColor settings) " > "
+        chatFromStringMethod
             (sInput settings)
             (not . sInteractive $ settings)
             settings
             (getFetchFunction settings)
             (getRender settings)
+  where
+    chatMethod = if (sPrompt settings == "") then chat else resumeChat history
+    chatFromStringMethod = if (sPrompt settings == "") then chatFromString else resumeChatFromString history
+    history = [G.newUserText . sPrompt $ settings]
 
 main :: IO ()
 main = do
