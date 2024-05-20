@@ -25,7 +25,7 @@ printPrompt color content = do
     liftIO $ putStr $ content
     liftIO $ resetColor
 
-defaultFetch :: Settings -> IO String
+defaultFetch :: Settings -> IO (Maybe String)
 defaultFetch settings =
     HL.runInputT
         HL.defaultSettings
@@ -35,33 +35,34 @@ defaultFetch settings =
                 then do
                     input <- HL.getInputLine ""
                     case input of
-                        Nothing -> liftIO $ exitWith (ExitFailure (-1))
+                        Nothing -> return Nothing
                         Just str -> do
-                            return str
+                            return . Just $ str
                 else do
                     liftIO $ printPrompt (sPromptColor settings) "\n\n : "
                     liftIO $ setColor . sUserColor $ settings
                     input <- HL.getInputLine ""
                     liftIO $ resetColor
                     case input of
-                        Nothing -> liftIO $ exitWith (ExitFailure (-1))
+                        Nothing -> return Nothing
                         Just str -> do
                             liftIO $ printPrompt (sPromptColor settings) "\n\n > "
-                            return str
+                            return . Just $ str
         )
 
-eofFetch :: Settings -> IO String
+eofFetch :: Settings -> IO (Maybe String)
 eofFetch settings = do
     let quietMode = sQuietMode settings
     if quietMode
         then do
-            HL.runInputT HL.defaultSettings (loop "")
+            str <- HL.runInputT HL.defaultSettings (loop "")
+            if str == "" then return Nothing else return . Just $ str
         else do
             liftIO $ printPrompt (sPromptColor settings) "\n\n : "
             liftIO $ setColor . sUserColor $ settings
             str <- HL.runInputT HL.defaultSettings (loop "")
             liftIO $ printPrompt (sPromptColor settings) "\n\n > "
-            return str
+            if str == "" then return Nothing else return . Just $ str
   where
     loop buffer = do
         input <- HL.getInputLine ""
@@ -114,7 +115,7 @@ defaultRender settings (G.OK response) = do
                     putStr $ "[No response]"
                     return []
 
-getFetchFunction :: Settings -> (Gask -> IO String)
+getFetchFunction :: Settings -> (Gask -> IO (Maybe String))
 getFetchFunction settings
     | sWaitForEOF settings = \_ -> eofFetch settings
     | otherwise = \_ -> defaultFetch settings
