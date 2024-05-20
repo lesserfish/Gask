@@ -43,7 +43,7 @@ https://github.com/lesserfish/gask/assets/73536889/87f9bafa-7f12-4329-96a2-d48d6
 
 ## Library
 
-We also include a library that allows you to use Gemini API from Haskell. Documentation is currently a work in progress.
+We also include a library that allows you to use Gemini API from Haskell. Documentation can be found [here](https://github.com/lesserfish/gask/blob/main/src/Gask/Documentation.md).
 
 ## Warning
 
