@@ -39,7 +39,7 @@ Be carefull simply piping the output of Gemini into your shell.
 
 It does not always have your best interests in mind:
 
-![image](https://github.com/lesserfish/gask/assets/73536889/8dc1ccfd-4d7d-43ba-97de-ca96831967f3)
+![image](https://github.com/lesserfish/gask/assets/73536889/67f5d142-a9c9-46f1-9474-69c4e1f521e6)
 
 You can try setting up an alias to gask with a reasonable (safe) prompt, or just write a function that asks for confirmation before evaluating the output of gask.
 
