@@ -29,9 +29,9 @@ Gask is a tool that lets you communicate with Gemini via the terminal. Usage is 
       -p,--prompt PROMPT_MESSAGE
                                Starting prompt for the model
       -h,--help                Show this help text
-## Library
 
-We also include a library that allows you to use Gemini API from Haskell. Documentation is currently a work in progress.
+In order to use Gask, you will need an API key. You can get one for free by clicking on the 'Get an API key' button at [ai.google.dev](https://ai.google.dev/gemini-api/docs/api-key).
+
 
 ## Trinkets
 
@@ -41,7 +41,9 @@ Some trinkets can be found in 'Auxiliary/'. For example, a VIM script that allow
 
 https://github.com/lesserfish/gask/assets/73536889/87f9bafa-7f12-4329-96a2-d48d6b1b475f
 
+## Library
 
+We also include a library that allows you to use Gemini API from Haskell. Documentation is currently a work in progress.
 
 ## Warning
 
